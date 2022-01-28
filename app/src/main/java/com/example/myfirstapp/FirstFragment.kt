@@ -6,60 +6,71 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.myfirstapp.databinding.FragmentFirstBinding
+import com.example.myfirstapp.model.CountViewModel
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
  */
 class FirstFragment : Fragment() {
 
-    private var _binding: FragmentFirstBinding? = null
+    //Binding object instance corresponds to fragment_first.xml
+    private var binding: FragmentFirstBinding? = null
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
+    //Set up shared view model
+    private val sharedViewModel: CountViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-
-        _binding = FragmentFirstBinding.inflate(inflater, container, false)
-        return binding.root
+    ): View {
+        val fragmentBinding = FragmentFirstBinding.inflate(inflater,container,false)
+        binding = fragmentBinding
+        return fragmentBinding.root
 
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.randomButton.setOnClickListener {
-            var currentCount: Int = binding.textviewFirst.text.toString().toInt()
-            var action = FirstFragmentDirections.actionFirstFragmentToSecondFragment(currentCount)
-            findNavController().navigate(action)
-        }
-
-        binding.toastButton.setOnClickListener {
-            Toast.makeText(context, resources.getString(R.string.toast_msg), Toast.LENGTH_SHORT).show()
-        }
-
-        binding.countButton.setOnClickListener {
-            countMe(binding.textviewFirst.text.toString())
+        binding?.apply {
+            viewModel = sharedViewModel
+            lifecycleOwner = viewLifecycleOwner
+            firstFragment = this@FirstFragment
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+        binding = null
     }
 
-    private fun countMe(countString: String){
-
+    /**
+     * Increment count after every count click
+     */
+    fun countMe(count: Int){
         //Convert value to a number and increment it
-        var count: Int = Integer.parseInt(countString)
-        count++
+        var newCount: Int = count
+        newCount++
 
         //Display the new value in the text view
-        binding.textviewFirst.text = count.toString()
+        sharedViewModel.setCount(newCount)
+    }
+
+    /**
+     * Generate a random number and navigate to Random (Second Fragment)
+     */
+    fun goToRandom(count: Int) {
+
+        sharedViewModel.setRandomNumber(count)
+        findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+    }
+
+    /**
+     * Create Toast Message
+     */
+    fun toastMessage(){
+        Toast.makeText(context, resources.getString(R.string.toast_msg), Toast.LENGTH_SHORT).show()
     }
 }
